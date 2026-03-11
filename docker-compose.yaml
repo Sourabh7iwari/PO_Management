@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: po_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: po_management
+    ports:
+      - "5434:5432" # Map port 5434 on the host to port 5432 in the container, locally postgres was running on 5432, so we need to change it to avoid conflict
+
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
