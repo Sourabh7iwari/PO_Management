@@ -1,12 +1,7 @@
-def calculate_total(items):
+from sqlalchemy.orm import Session
+from app import crud
 
-    subtotal = 0
 
-    for item in items:
-        subtotal += item.price * item.quantity
+def get_purchase_orders(db: Session):
+    return crud.get_purchase_orders(db)
 
-    tax = subtotal * 0.05
-
-    total = subtotal + tax
-
-    return total

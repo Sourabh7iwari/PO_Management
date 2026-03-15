@@ -22,11 +22,10 @@ class Product(BaseModel):
 class POLineItemCreate(BaseModel):
     product_id: int
     quantity: int
-    price: float
+    
 
 
 class PurchaseOrderCreate(BaseModel):
-    ref_no: str
     vendor_id: int
     items: List[POLineItemCreate]
 

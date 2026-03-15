@@ -1,7 +1,10 @@
 from sqlalchemy.orm import Session
 from . import models
-from .services import calculate_total
 from fastapi import HTTPException
+from app.models import PurchaseOrder
+from decimal import Decimal
+from datetime import datetime
+import uuid
 
 def get_vendors(db: Session):
     return db.query(models.Vendor).all()
@@ -12,6 +15,7 @@ def get_products(db: Session):
 
 
 def create_purchase_order(db: Session, order):
+    
 
     try:
 
@@ -29,18 +33,9 @@ def create_purchase_order(db: Session, order):
                 detail="Vendor not found"
             )
 
-        existing_po = db.query(models.PurchaseOrder).filter(
-            models.PurchaseOrder.ref_no == order.ref_no
-        ).first()
-
-        if existing_po:
-            raise HTTPException(
-                status_code=400,
-                detail="Purchase order reference already exists"
-            )
 
         po = models.PurchaseOrder(
-            ref_no=order.ref_no,
+            ref_no = f"PO-{datetime.now().year}-{uuid.uuid4().hex[:6].upper()}",
             vendor_id=order.vendor_id,
             status="Pending"
         )
@@ -48,7 +43,7 @@ def create_purchase_order(db: Session, order):
         db.add(po)
         db.flush()
 
-        total = 0
+        total = Decimal("0")
         seen_products = set()
 
         for item in order.items:
@@ -61,21 +56,15 @@ def create_purchase_order(db: Session, order):
 
             seen_products.add(item.product_id)
 
-            if item.quantity <= 0:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Quantity must be positive"
-                )
-
             product = db.get(models.Product, item.product_id)
 
             if not product:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"Product {item.product_id} not found"
+                    detail="Product not found"
                 )
 
-            line_total = product.unit_price * item.quantity
+            line_total = Decimal(product.unit_price) * item.quantity
             total += line_total
 
             db.add(
@@ -87,7 +76,7 @@ def create_purchase_order(db: Session, order):
                 )
             )
 
-        tax = round(total * 0.05, 2)
+        tax = total * Decimal("0.05")
         po.total_amount = total + tax
 
         db.commit()
@@ -98,3 +87,7 @@ def create_purchase_order(db: Session, order):
         raise
 
     return po
+
+
+def get_purchase_orders(db: Session):
+    return db.query(PurchaseOrder).all()
